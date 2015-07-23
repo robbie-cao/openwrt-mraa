@@ -34,6 +34,9 @@
 #include "uart.h"
 #include "mraa_internal.h"
 
+#ifndef CMSPAR
+#define CMSPAR	  010000000000
+#endif
 // This function takes an unsigned int and converts it to a B* speed_t
 // that can be used with linux/posix termios
 static speed_t
