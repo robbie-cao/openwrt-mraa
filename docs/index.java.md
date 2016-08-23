@@ -30,6 +30,9 @@ functionality.
 | @ref common.h "common" | @ref mraa::mraa "mraa class" |
 </center>
 
+### Hello Mraa
+@snippet HelloEdison.java Interesting
+
 ## Supported platforms
 
 Specific platform information for supported platforms is documented here:
@@ -43,6 +46,8 @@ Specific platform information for supported platforms is documented here:
 - @ref bananapi
 - @ref beaglebone
 - @ref nuc5
+- @ref up
+- @ref grossetete
 - @ref ft4222
 
 ## DEBUGGING
@@ -61,3 +66,6 @@ More information on compiling is @ref building page.
 Please see the @ref contributing page, the @ref internals page may also be of
 use.
 
+## API Changelog
+
+Version @ref changelog here.

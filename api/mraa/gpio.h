@@ -28,11 +28,10 @@
  * @file
  * @brief General Purpose IO
  *
- * Gpio is the General Purpose IO interface to libmraa. It's features depends on
+ * Gpio is the General Purpose IO interface to libmraa. Its features depend on
  * the board type used, it can use gpiolibs (exported via a kernel module
  * through sysfs), or memory mapped IO via a /dev/uio device or /dev/mem
- * depending again on the board configuratio, or memory mapped IO via a
- * /dev/uio device or /dev/mem depending again on the board configuration
+ * depending again on the board configuration.
  *
  * @snippet gpio_read6.c Interesting
  */
@@ -41,14 +40,16 @@
 extern "C" {
 #endif
 
-#ifdef SWIGPYTHON
-#include <Python.h>
-#endif
-
 #include <stdio.h>
 #include <pthread.h>
-
 #include "common.h"
+
+#if defined(SWIGJAVA) || defined(JAVACALLBACK)
+#include <jni.h>
+extern "C" {
+    void mraa_java_isr_callback(void *args);
+}
+#endif
 
 /**
  * Opaque pointer definition to the internal struct _gpio
@@ -76,13 +77,13 @@ typedef enum {
 } mraa_gpio_dir_t;
 
 /**
- * Gpio Edge types for interupts
+ * Gpio Edge types for interrupts
  */
 typedef enum {
     MRAA_GPIO_EDGE_NONE = 0,   /**< No interrupt on Gpio */
-    MRAA_GPIO_EDGE_BOTH = 1,   /**< Interupt on rising & falling */
-    MRAA_GPIO_EDGE_RISING = 2, /**< Interupt on rising only */
-    MRAA_GPIO_EDGE_FALLING = 3 /**< Interupt on falling only */
+    MRAA_GPIO_EDGE_BOTH = 1,   /**< Interrupt on rising & falling */
+    MRAA_GPIO_EDGE_RISING = 2, /**< Interrupt on rising only */
+    MRAA_GPIO_EDGE_FALLING = 3 /**< Interrupt on falling only */
 } mraa_gpio_edge_t;
 
 /**
@@ -111,11 +112,11 @@ mraa_gpio_context mraa_gpio_init_raw(int gpiopin);
 mraa_result_t mraa_gpio_edge_mode(mraa_gpio_context dev, mraa_gpio_edge_t mode);
 
 /**
- * Set an interupt on pin
+ * Set an interrupt on pin
  *
  * @param dev The Gpio context
  * @param edge The edge mode to set the gpio into
- * @param fptr Function pointer to function to be called when interupt is
+ * @param fptr Function pointer to function to be called when interrupt is
  * triggered
  * @param args Arguments passed to the interrupt handler (fptr)
  * @return Result of operation
@@ -123,7 +124,7 @@ mraa_result_t mraa_gpio_edge_mode(mraa_gpio_context dev, mraa_gpio_edge_t mode);
 mraa_result_t mraa_gpio_isr(mraa_gpio_context dev, mraa_gpio_edge_t edge, void (*fptr)(void*), void* args);
 
 /**
- * Stop the current interupt watcher on this Gpio, and set the Gpio edge mode
+ * Stop the current interrupt watcher on this Gpio, and set the Gpio edge mode
  * to MRAA_GPIO_EDGE_NONE
  *
  * @param dev The Gpio context
@@ -148,6 +149,15 @@ mraa_result_t mraa_gpio_mode(mraa_gpio_context dev, mraa_gpio_mode_t mode);
  * @return Result of operation
  */
 mraa_result_t mraa_gpio_dir(mraa_gpio_context dev, mraa_gpio_dir_t dir);
+
+/**
+ * Read Gpio direction
+ *
+ * @param dev The Gpio context
+ * @param dir The address where to store the Gpio direction
+ * @return Result of operation
+ */
+mraa_result_t mraa_gpio_read_dir(mraa_gpio_context dev, mraa_gpio_dir_t *dir);
 
 /**
  * Close the Gpio context

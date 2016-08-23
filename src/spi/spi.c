@@ -25,8 +25,17 @@
 
 #include <stdlib.h>
 #include <string.h>
+#if defined(MSYS)
+#define __USE_LINUX_IOCTL_DEFS
+#endif
 #include <sys/ioctl.h>
+#if defined(MSYS)
+// There's no spidev.h on MSYS, so we need to provide our own,
+// and only *after* including ioctl.h as that one contains prerequisites.
+#include "linux/spi_kernel_headers.h"
+#else
 #include <linux/spi/spidev.h>
+#endif
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -77,35 +86,37 @@ mraa_spi_init(int bus)
         }
     }
 
-    int pos = plat->spi_bus[bus].sclk;
-    if (plat->pins[pos].spi.mux_total > 0) {
-        if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
-            syslog(LOG_ERR, "spi: failed to set-up spi sclk multiplexer");
-            return NULL;
+    if (!plat->no_bus_mux) {
+        int pos = plat->spi_bus[bus].sclk;
+        if (plat->pins[pos].spi.mux_total > 0) {
+            if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
+                syslog(LOG_ERR, "spi: failed to set-up spi sclk multiplexer");
+                return NULL;
+            }
         }
-    }
 
-    pos = plat->spi_bus[bus].mosi;
-    if (plat->pins[pos].spi.mux_total > 0) {
-        if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
-            syslog(LOG_ERR, "spi: failed to set-up spi mosi multiplexer");
-            return NULL;
+        pos = plat->spi_bus[bus].mosi;
+        if (plat->pins[pos].spi.mux_total > 0) {
+            if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
+                syslog(LOG_ERR, "spi: failed to set-up spi mosi multiplexer");
+                return NULL;
+            }
         }
-    }
 
-    pos = plat->spi_bus[bus].miso;
-    if (plat->pins[pos].spi.mux_total > 0) {
-        if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
-            syslog(LOG_ERR, "spi: failed to set-up spi miso multiplexer");
-            return NULL;
+        pos = plat->spi_bus[bus].miso;
+        if (plat->pins[pos].spi.mux_total > 0) {
+            if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
+                syslog(LOG_ERR, "spi: failed to set-up spi miso multiplexer");
+                return NULL;
+            }
         }
-    }
 
-    pos = plat->spi_bus[bus].cs;
-    if (plat->pins[pos].spi.mux_total > 0) {
-        if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
-            syslog(LOG_ERR, "spi: failed to set-up spi cs multiplexer");
-            return NULL;
+        pos = plat->spi_bus[bus].cs;
+        if (plat->pins[pos].spi.mux_total > 0) {
+            if (mraa_setup_mux_mapped(plat->pins[pos].spi) != MRAA_SUCCESS) {
+                syslog(LOG_ERR, "spi: failed to set-up spi cs multiplexer");
+                return NULL;
+            }
         }
     }
     mraa_spi_context dev = mraa_spi_init_raw(plat->spi_bus[bus].bus_id, plat->spi_bus[bus].slave_s);
@@ -141,10 +152,12 @@ mraa_spi_init_raw(unsigned int bus, unsigned int cs)
     }
 
     int speed = 0;
-    if ((ioctl(dev->devfd, SPI_IOC_RD_MAX_SPEED_HZ, &speed) != -1) && (speed < 4000000)) {
+    if (ioctl(dev->devfd, SPI_IOC_RD_MAX_SPEED_HZ, &speed) != -1) {
         dev->clock = speed;
     } else {
+        // We had this on Galileo Gen1, so let it be a fallback value
         dev->clock = 4000000;
+        syslog(LOG_WARNING, "spi: Max speed query failed, setting %d", dev->clock);
     }
 
     if (mraa_spi_mode(dev, MRAA_SPI_MODE0) != MRAA_SUCCESS) {
@@ -263,7 +276,7 @@ mraa_spi_write(mraa_spi_context dev, uint8_t data)
     return (int) recv;
 }
 
-uint16_t
+int
 mraa_spi_write_word(mraa_spi_context dev, uint16_t data)
 {
     struct spi_ioc_transfer msg;
@@ -282,7 +295,7 @@ mraa_spi_write_word(mraa_spi_context dev, uint16_t data)
         syslog(LOG_ERR, "spi: Failed to perform dev transfer");
         return -1;
     }
-    return recv;
+    return (int) recv;
 }
 
 mraa_result_t

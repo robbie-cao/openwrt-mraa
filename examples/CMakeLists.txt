@@ -12,6 +12,7 @@ add_executable (uart uart.c)
 add_executable (mraa-gpio mraa-gpio.c)
 add_executable (mraa-i2c mraa-i2c.c)
 add_executable (spi_max7219 spi_max7219.c)
+add_executable (iio_driver iio_driver.c)
 
 include_directories(${PROJECT_SOURCE_DIR}/api)
 # FIXME Hack to access mraa internal types used by mraa-i2c
@@ -32,11 +33,29 @@ target_link_libraries (uart mraa)
 target_link_libraries (mraa-gpio mraa)
 target_link_libraries (mraa-i2c mraa)
 target_link_libraries (spi_max7219 mraa)
+target_link_libraries (iio_driver mraa)
+
+if (ONEWIRE)
+  add_executable (uart_ow uart_ow.c)
+  target_link_libraries (uart_ow mraa)
+endif ()
+
+if (FIRMATA)
+  add_executable (firmata_curie_imu firmata_curie_imu.c)
+  add_executable (i2c_firmata i2c_firmata.c)
+  target_link_libraries (firmata_curie_imu mraa)
+  target_link_libraries (i2c_firmata mraa)
+endif ()
 
 add_subdirectory (c++)
 
-install (DIRECTORY ${PROJECT_SOURCE_DIR}/examples/ DESTINATION share/mraa/examples)
+install (DIRECTORY ${PROJECT_SOURCE_DIR}/examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/mraa/examples)
 
-if (INSTALLGPIOTOOL)
+if (INSTALLGPIOTOOL AND NOT INSTALLTOOLS)
    install (TARGETS mraa-gpio DESTINATION bin)
+endif()
+
+if (INSTALLTOOLS)
+   install (TARGETS mraa-gpio DESTINATION bin)
+   install (TARGETS mraa-i2c DESTINATION bin)
 endif()

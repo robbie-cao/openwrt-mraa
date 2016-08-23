@@ -65,21 +65,22 @@ list_platform_pins(uint8_t platform_offset)
     int pin_count = mraa_get_platform_pin_count(platform_offset);
     int i;
     for (i = 0; i < pin_count; ++i) {
-        if (strcmp(mraa_get_pin_name(i), "INVALID") != 0) {
-            int pin_id = platform_offset > 0 ? mraa_get_sub_platform_id(i) : i;
+        int pin_id = platform_offset > 0 ? mraa_get_sub_platform_id(i) : i;
+        char* pin_name = mraa_get_pin_name(pin_id);
+        if (strcmp(pin_name, "INVALID")  != 0 && mraa_pin_mode_test(pin_id, MRAA_PIN_VALID)) {
             fprintf(stdout, "%02d ", pin_id);
-            fprintf(stdout, "%*s: ", (MRAA_PIN_NAME_SIZE - 1), mraa_get_pin_name(i));
-            if (mraa_pin_mode_test(i, MRAA_PIN_GPIO))
+            fprintf(stdout, "%*s: ", (MRAA_PIN_NAME_SIZE - 1), pin_name);
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_GPIO))
                 fprintf(stdout, "GPIO ");
-            if (mraa_pin_mode_test(i, MRAA_PIN_I2C))
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_I2C))
                 fprintf(stdout, "I2C  ");
-            if (mraa_pin_mode_test(i, MRAA_PIN_SPI))
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_SPI))
                 fprintf(stdout, "SPI  ");
-            if (mraa_pin_mode_test(i, MRAA_PIN_PWM))
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_PWM))
                 fprintf(stdout, "PWM  ");
-            if (mraa_pin_mode_test(i, MRAA_PIN_AIO))
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_AIO))
                 fprintf(stdout, "AIO  ");
-            if (mraa_pin_mode_test(i, MRAA_PIN_UART))
+            if (mraa_pin_mode_test(pin_id, MRAA_PIN_UART))
                 fprintf(stdout, "UART ");
             fprintf(stdout, "\n");
         }
@@ -96,13 +97,19 @@ list_pins()
     if (pin_count == 0) {
         fprintf(stdout, "No Pins\n");
     }
+    return pin_count;
 }
-
 
 mraa_result_t
 gpio_set(int pin, int level, mraa_boolean_t raw)
 {
-    mraa_gpio_context gpio = mraa_gpio_init(pin);
+    mraa_gpio_context gpio;
+    if (raw) {
+        gpio = mraa_gpio_init_raw(pin);
+    }
+    else {
+        gpio = mraa_gpio_init(pin);
+    }
     if (gpio != NULL) {
         mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
         if (raw != 0) {
