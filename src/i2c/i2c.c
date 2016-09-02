@@ -292,6 +292,35 @@ mraa_i2c_write(mraa_i2c_context dev, const uint8_t* data, int length)
 }
 
 mraa_result_t
+mraa_i2c_write_data(mraa_i2c_context dev, const uint8_t* data, int length)
+{
+    if (dev == NULL) {
+        syslog(LOG_ERR, "i2c: write: context is invalid");
+        return MRAA_ERROR_INVALID_HANDLE;
+    }
+
+    if (IS_FUNC_DEFINED(dev, i2c_write_replace))
+        return dev->advance_func->i2c_write_replace(dev, data, length);
+    i2c_smbus_data_t d;
+    int i;
+
+    if (length > I2C_SMBUS_I2C_BLOCK_MAX) {
+        length = I2C_SMBUS_I2C_BLOCK_MAX;
+    }
+
+    for (i = 1; i <= length; i++) {
+        d.block[i] = data[i - 1];
+    }
+    d.block[0] = length;
+
+    if (mraa_i2c_smbus_access(dev->fh, I2C_SMBUS_WRITE, I2C_NOCMD, I2C_SMBUS_I2C_BLOCK_DATA, &d) < 0) {
+        syslog(LOG_ERR, "i2c%i: write: Access error: %s", dev->busnum, strerror(errno));
+        return MRAA_ERROR_UNSPECIFIED;
+    }
+    return MRAA_SUCCESS;
+}
+
+mraa_result_t
 mraa_i2c_write_byte(mraa_i2c_context dev, const uint8_t data)
 {
     if (IS_FUNC_DEFINED(dev, i2c_write_byte_replace)) {
