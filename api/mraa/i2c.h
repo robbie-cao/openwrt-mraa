@@ -89,8 +89,17 @@ mraa_result_t mraa_i2c_frequency(mraa_i2c_context dev, mraa_i2c_mode_t mode);
 int mraa_i2c_read(mraa_i2c_context dev, uint8_t* data, int length);
 
 /**
- * Simple read for a single byte from the i2c context, this will always begin
- * with the i2c offset 0x0
+ * Read block data from an i2c context
+ *
+ * @param dev The i2c context
+ * @param data pointer to the byte array to read data in to
+ * @param length max number of bytes to read
+ * @return length of the read in bytes or -1
+ */
+int mraa_i2c_read_data(mraa_i2c_context dev, uint8_t* data, int length);
+
+/**
+ * Simple read for a single byte from the i2c context
  *
  * @param dev The i2c context
  * @return The result of the read and 0 if failed

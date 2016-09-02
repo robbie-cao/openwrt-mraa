@@ -212,6 +212,29 @@ mraa_i2c_read(mraa_i2c_context dev, uint8_t* data, int length)
       return 0;
 }
 
+int
+mraa_i2c_read_data(mraa_i2c_context dev, uint8_t* data, int length)
+{
+    if (dev == NULL) {
+        syslog(LOG_ERR, "i2c: read_data: context is invalid");
+        return -1;
+    }
+
+    //if (IS_FUNC_DEFINED(dev, i2c_read_byte_replace))
+    //    return dev->advance_func->i2c_read_byte_replace(dev);
+    i2c_smbus_data_t d;
+
+    d.block[0] = length;
+    if (mraa_i2c_smbus_access(dev->fh, I2C_SMBUS_READ, I2C_NOCMD, I2C_SMBUS_BLOCK_DATA, &d) < 0) {
+        syslog(LOG_ERR, "i2c%i: read_data: Access error: %s", dev->busnum, strerror(errno));
+        return -1;
+    }
+
+    memcpy(data, &d.block[1], length);
+
+    return d.block[0];
+}
+
 uint8_t
 mraa_i2c_read_byte(mraa_i2c_context dev)
 {
