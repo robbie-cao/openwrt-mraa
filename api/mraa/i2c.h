@@ -136,6 +136,15 @@ int mraa_i2c_read_bytes_data(mraa_i2c_context dev, uint8_t command, uint8_t* dat
 mraa_result_t mraa_i2c_write(mraa_i2c_context dev, const uint8_t* data, int length);
 
 /**
+ * Write length bytes to the bus, no command/register compare with mraa_i2c_write()
+ * @param dev The i2c context
+ * @param data pointer to the byte array to be written
+ * @param length the number of bytes to transmit
+ * @return Result of operation
+ */
+mraa_result_t mraa_i2c_write_data(mraa_i2c_context dev, const uint8_t* data, int length);
+
+/**
  * Write a single byte to an i2c context
  *
  * @param dev The i2c context
